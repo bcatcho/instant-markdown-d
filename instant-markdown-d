@@ -12,6 +12,8 @@ var server = require('http').createServer(httpHandler),
 server.listen(8090);
 
 function httpHandler(req, res) {
+  var gfm;
+
   switch(req.method)
   {
     case 'GET':
@@ -65,7 +67,8 @@ function httpHandler(req, res) {
 
     case 'PUT':
       var newHTML = '';
-      var gfm = spawn(__dirname + '/node_modules/docter/bin/github-flavored-markdown.rb', ['--unstyled']);
+      if (!gfm){
+      gfm = spawn(__dirname + '/node_modules/docter/bin/github-flavored-markdown.rb', ['--unstyled']);
       req.on('data', function(chunk){
         gfm.stdin.write(chunk);
       });
@@ -79,7 +82,13 @@ function httpHandler(req, res) {
       });
       gfm.on('exit',function(ecode){
         socket.emit('newContent', newHTML);
+        gfm = null
       });
+      }
+      else{
+        res.writeHead(200);
+        res.end();
+      }
       break;
 
     default:
